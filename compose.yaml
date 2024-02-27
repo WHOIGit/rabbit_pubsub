@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: "rabbitmq:latest"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - warren
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 2s
+      timeout: 30s
+      retries: 10
+
+  pybase: &app
+    build:
+      context: .
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - warren
+    volumes:
+      - ./app:/app
+
+  pyinput:
+    <<: *app
+    command: python do_input.py
+    volumes:
+      - ./app:/app
+      - ./vols/input:/input
+
+  pyproc:
+    <<: *app
+    command: python do_proc.py
+
+  pyoutput:
+    <<: *app
+    command: python do_output.py
+    volumes:
+      - ./app:/app
+      - ./vols/output:/output
+
+networks:
+  warren:
+    driver: bridge
