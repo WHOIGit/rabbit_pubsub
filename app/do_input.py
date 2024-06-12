@@ -3,7 +3,7 @@ import os
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from amqp_utils import publish_to_rabbitmq_channel
+from amqp_utils import publish #publish_to_rabbitmq_channel
 
 
 class Watcher:
@@ -41,7 +41,8 @@ class Handler(FileSystemEventHandler):
         print(f"Received created event - {event.src_path}")
         rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
         rabbitmq_queue = "newfile_queue"
-        publish_to_rabbitmq_channel(rabbitmq_host, rabbitmq_queue, message=event.src_path)
+        publish(message=event.src_path, host=rabbitmq_host, user='guest', password='guest', exchange_name='egg', exchange_type='direct', routing_key=rabbitmq_queue)
+        #publish_to_rabbitmq_channel(rabbitmq_host, rabbitmq_queue, message=event.src_path)
 
 
 
